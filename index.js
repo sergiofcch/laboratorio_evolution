@@ -69,8 +69,10 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   const requestPayload = {
     number: phoneNumber,
     mediatype: "image",
+    mimetype: "image/png",
     media: imageUrl,
     caption: "Imagen generada desde laboratorio",
+    fileName: "image.png",
   };
 
   try {
