@@ -75,7 +75,6 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   const imageUrl = await uploadImageToS3(imageBuffer);
 
   const requestPayload = {
-    instance: "what",
     number: normalizedPhone,
     mediatype: "image",
     mimetype: "image/png",
@@ -86,7 +85,7 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
 
   try {
     const response = await axios.post(
-      `${EVOLUCION_API_URL}/message/sendMedia`,
+      `${EVOLUCION_API_URL}/message/sendMedia/what`,
       requestPayload,
       {
         headers: {
