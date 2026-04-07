@@ -35,17 +35,16 @@ async function renderHtmlToPng(html) {
 async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   const base64Image = imageBuffer.toString("base64");
   const response = await axios.post(
-    `${EVOLUCION_API_URL}/message/sendImage`,
+    `${EVOLUCION_API_URL}/message/sendMedia/what`,
     {
       number: phoneNumber,
-      image: {
-        imageBase64: base64Image,
-        caption: "Imagen generada desde laboratorio",
-      },
+      mediatype: "image",
+      media: base64Image,
+      caption: "Imagen generada desde laboratorio",
     },
     {
       headers: {
-        Authorization: `Bearer ${EVOLUCION_API_KEY}`,
+        apikey: EVOLUCION_API_KEY,
         "Content-Type": "application/json",
       },
     }
