@@ -66,22 +66,34 @@ async function uploadImageToS3(imageBuffer) {
 async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   const imageUrl = await uploadImageToS3(imageBuffer);
 
-  const response = await axios.post(
-    `${EVOLUCION_API_URL}/message/sendMedia/what`,
-    {
-      number: phoneNumber,
-      mediatype: "image",
-      media: imageUrl,
-      caption: "Imagen generada desde laboratorio",
-    },
-    {
-      headers: {
-        apikey: EVOLUCION_API_KEY,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  return response.data;
+  const requestPayload = {
+    number: phoneNumber,
+    mediatype: "image",
+    media: imageUrl,
+    caption: "Imagen generada desde laboratorio",
+  };
+
+  try {
+    const response = await axios.post(
+      `${EVOLUCION_API_URL}/message/sendMedia/what`,
+      requestPayload,
+      {
+        headers: {
+          apikey: EVOLUCION_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Evolution API error status:", error.response?.status);
+    console.error("Evolution API error data:", JSON.stringify(error.response?.data, null, 2));
+    console.error("Evolution API request sent:", JSON.stringify(requestPayload, null, 2));
+    const detailedMessage = error.response?.data
+      ? JSON.stringify(error.response.data)
+      : error.message;
+    throw new Error(`Evolution API failed (${error.response?.status}): ${detailedMessage}`);
+  }
 }
 
 app.post("/generate-and-send", async (req, res) => {
