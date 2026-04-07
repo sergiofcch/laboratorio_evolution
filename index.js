@@ -10,6 +10,12 @@ const EVOLUCION_API_URL = process.env.EVOLUCION_API_URL;
 const EVOLUCION_API_KEY = process.env.EVOLUCION_API_KEY;
 const WHATSAPP_PHONE = process.env.WHATSAPP_PHONE;
 
+const S3_BUCKET = process.env.BUCKET;
+const S3_REGION = process.env.REGION;
+const S3_ENDPOINT = process.env.ENDPOINT;
+const S3_ACCESS_KEY_ID = process.env.ACCESS_KEY_ID;
+const S3_SECRET_ACCESS_KEY = process.env.SECRET_ACCESS_KEY;
+
 let browser;
 
 async function initBrowser() {
@@ -32,14 +38,31 @@ async function renderHtmlToPng(html) {
   return pngBuffer;
 }
 
+async function uploadImageToS3(imageBuffer) {
+  const filename = `image-${Date.now()}.png`;
+
+  const s3File = Bun.s3(filename, {
+    bucket: S3_BUCKET,
+    region: S3_REGION,
+    endpoint: S3_ENDPOINT,
+    accessKeyId: S3_ACCESS_KEY_ID,
+    secretAccessKey: S3_SECRET_ACCESS_KEY,
+  });
+
+  await Bun.write(s3File, imageBuffer);
+
+  return `${S3_ENDPOINT}/${S3_BUCKET}/${filename}`;
+}
+
 async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
-  const base64Image = imageBuffer.toString("base64");
+  const imageUrl = await uploadImageToS3(imageBuffer);
+
   const response = await axios.post(
     `${EVOLUCION_API_URL}/message/sendMedia/what`,
     {
       number: phoneNumber,
       mediatype: "image",
-      media: base64Image,
+      media: imageUrl,
       caption: "Imagen generada desde laboratorio",
     },
     {
