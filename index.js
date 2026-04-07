@@ -84,15 +84,30 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   };
 
   try {
+    const requestUrl = `${EVOLUCION_API_URL}/message/sendMedia/what`;
+    const requestHeaders = {
+      apikey: EVOLUCION_API_KEY,
+      "Content-Type": "application/json",
+    };
+
+    console.log("[DEBUG] Evolution API URL:", requestUrl);
+    console.log(
+      "[DEBUG] apikey (first 10 chars):",
+      EVOLUCION_API_KEY
+        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
+        : "(empty or undefined)"
+    );
+    console.log("[DEBUG] Headers being sent:", JSON.stringify({
+      ...requestHeaders,
+      apikey: EVOLUCION_API_KEY
+        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
+        : "(empty or undefined)",
+    }, null, 2));
+
     const response = await axios.post(
-      `${EVOLUCION_API_URL}/message/sendMedia/what`,
+      requestUrl,
       requestPayload,
-      {
-        headers: {
-          apikey: EVOLUCION_API_KEY,
-          "Content-Type": "application/json",
-        },
-      }
+      { headers: requestHeaders }
     );
     return response.data;
   } catch (error) {
