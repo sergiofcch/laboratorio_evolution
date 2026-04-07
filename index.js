@@ -72,11 +72,8 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
     normalizedPhone = "57" + normalizedPhone;
   }
 
-  // TEMP DEBUG: Use a hardcoded public image URL to isolate whether the 403
-  // is caused by the S3 URL being unreachable from Evolution API's network.
-  // Replace with `await uploadImageToS3(imageBuffer)` once confirmed working.
-  const imageUrl = "http://httpbin.org/image/png";
-  console.log("[DEBUG] Using hardcoded test image URL (S3 upload skipped):", imageUrl);
+  const s3Url = await uploadImageToS3(imageBuffer);
+  const imageUrl = s3Url.replace("https://", "http://");
 
   const requestPayload = {
     number: normalizedPhone,
