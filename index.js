@@ -64,10 +64,18 @@ async function uploadImageToS3(imageBuffer) {
 }
 
 async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
+  // Normalize phone number to full international format (digits only, with country code).
+  // Accepts: "3143607930", "+573143607930", "573143607930" → "573143607930"
+  let normalizedPhone = String(phoneNumber).replace(/\D/g, "");
+  if (!normalizedPhone.startsWith("57") || normalizedPhone.length <= 10) {
+    // No country code present — prepend Colombia's country code
+    normalizedPhone = "57" + normalizedPhone;
+  }
+
   const imageUrl = await uploadImageToS3(imageBuffer);
 
   const requestPayload = {
-    number: phoneNumber,
+    number: normalizedPhone,
     mediatype: "image",
     mimetype: "image/png",
     media: imageUrl,
