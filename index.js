@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
 import express from "express";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const app = express();
 app.use(express.json());
@@ -41,15 +42,23 @@ async function renderHtmlToPng(html) {
 async function uploadImageToS3(imageBuffer) {
   const filename = `image-${Date.now()}.png`;
 
-  const s3File = Bun.s3(filename, {
-    bucket: S3_BUCKET,
-    region: S3_REGION,
+  const s3Client = new S3Client({
     endpoint: S3_ENDPOINT,
-    accessKeyId: S3_ACCESS_KEY_ID,
-    secretAccessKey: S3_SECRET_ACCESS_KEY,
+    region: S3_REGION,
+    credentials: {
+      accessKeyId: S3_ACCESS_KEY_ID,
+      secretAccessKey: S3_SECRET_ACCESS_KEY,
+    },
   });
 
-  await Bun.write(s3File, imageBuffer);
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: filename,
+      Body: imageBuffer,
+      ContentType: "image/png",
+    })
+  );
 
   return `${S3_ENDPOINT}/${S3_BUCKET}/${filename}`;
 }
