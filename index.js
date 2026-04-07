@@ -86,21 +86,21 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   try {
     const requestUrl = `${EVOLUCION_API_URL}/message/sendMedia/what`;
     const requestHeaders = {
-      apikey: EVOLUCION_API_KEY,
+      Authorization: `Bearer ${EVOLUCION_API_KEY}`,
       "Content-Type": "application/json",
     };
 
     console.log("[DEBUG] Evolution API URL:", requestUrl);
     console.log(
-      "[DEBUG] apikey (first 10 chars):",
+      "[DEBUG] Authorization Bearer (first 10 chars of key):",
       EVOLUCION_API_KEY
-        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
+        ? `Bearer ${String(EVOLUCION_API_KEY).substring(0, 10)}...`
         : "(empty or undefined)"
     );
     console.log("[DEBUG] Headers being sent:", JSON.stringify({
       ...requestHeaders,
-      apikey: EVOLUCION_API_KEY
-        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
+      Authorization: EVOLUCION_API_KEY
+        ? `Bearer ${String(EVOLUCION_API_KEY).substring(0, 10)}...`
         : "(empty or undefined)",
     }, null, 2));
 
