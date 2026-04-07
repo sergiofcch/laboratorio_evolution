@@ -86,34 +86,40 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   try {
     const requestUrl = `${EVOLUCION_API_URL}/message/sendMedia/what`;
     const requestHeaders = {
-      Authorization: `Bearer ${EVOLUCION_API_KEY}`,
+      apikey: EVOLUCION_API_KEY,
       "Content-Type": "application/json",
     };
 
     console.log("[DEBUG] Evolution API URL:", requestUrl);
     console.log(
-      "[DEBUG] Authorization Bearer (first 10 chars of key):",
+      "[DEBUG] apikey header (first 10 chars of key):",
       EVOLUCION_API_KEY
-        ? `Bearer ${String(EVOLUCION_API_KEY).substring(0, 10)}...`
+        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
         : "(empty or undefined)"
     );
     console.log("[DEBUG] Headers being sent:", JSON.stringify({
       ...requestHeaders,
-      Authorization: EVOLUCION_API_KEY
-        ? `Bearer ${String(EVOLUCION_API_KEY).substring(0, 10)}...`
+      apikey: EVOLUCION_API_KEY
+        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
         : "(empty or undefined)",
     }, null, 2));
+    console.log("[DEBUG] Request payload:", JSON.stringify(requestPayload, null, 2));
 
     const response = await axios.post(
       requestUrl,
       requestPayload,
       { headers: requestHeaders }
     );
+
+    console.log("[DEBUG] Evolution API response status:", response.status);
+    console.log("[DEBUG] Evolution API response data:", JSON.stringify(response.data, null, 2));
+
     return response.data;
   } catch (error) {
     console.error("Evolution API error status:", error.response?.status);
     console.error("Evolution API error data:", JSON.stringify(error.response?.data, null, 2));
     console.error("Evolution API request sent:", JSON.stringify(requestPayload, null, 2));
+    console.error("[DEBUG] Evolution API request config headers:", JSON.stringify(error.config?.headers, null, 2));
     const detailedMessage = error.response?.data
       ? JSON.stringify(error.response.data)
       : error.message;
