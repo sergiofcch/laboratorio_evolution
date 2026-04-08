@@ -1,5 +1,4 @@
 import puppeteer from "puppeteer";
-import axios from "axios";
 import express from "express";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -8,9 +7,6 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const EVOLUCION_API_URL = process.env.EVOLUCION_API_URL;
-const EVOLUCION_API_KEY = process.env.EVOLUCION_API_KEY;
-const WHATSAPP_PHONE = process.env.WHATSAPP_PHONE;
 
 const S3_BUCKET = process.env.BUCKET;
 const S3_REGION = process.env.REGION;
@@ -70,87 +66,39 @@ async function uploadImageToS3(imageBuffer) {
   return signedUrl;
 }
 
-async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
-  // Normalize phone number to full international format (digits only, with country code).
-  // Accepts: "3143607930", "+573143607930", "573143607930" → "573143607930"
-  let normalizedPhone = String(phoneNumber).replace(/\D/g, "");
-  if (!normalizedPhone.startsWith("57") || normalizedPhone.length <= 10) {
-    // No country code present — prepend Colombia's country code
-    normalizedPhone = "57" + normalizedPhone;
-  }
-
-  const s3Url = await uploadImageToS3(imageBuffer);
-  const imageUrl = s3Url;
-
-  const requestPayload = {
-    number: normalizedPhone,
-    mediatype: "image",
-    mimetype: "image/png",
-    media: imageUrl,
-    caption: "Imagen generada desde laboratorio",
-    fileName: "image.png",
-  };
-
+app.post("/generate", async (req, res) => {
   try {
-    const requestUrl = `${EVOLUCION_API_URL}/message/sendMedia/what`;
-    const requestHeaders = {
-      apikey: EVOLUCION_API_KEY,
-      "Content-Type": "application/json",
-    };
-
-    console.log("[DEBUG] Evolution API URL:", requestUrl);
-    console.log(
-      "[DEBUG] apikey header (first 10 chars of key):",
-      EVOLUCION_API_KEY
-        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
-        : "(empty or undefined)"
-    );
-    console.log("[DEBUG] Headers being sent:", JSON.stringify({
-      ...requestHeaders,
-      apikey: EVOLUCION_API_KEY
-        ? `${String(EVOLUCION_API_KEY).substring(0, 10)}...`
-        : "(empty or undefined)",
-    }, null, 2));
-    console.log("[DEBUG] Request payload:", JSON.stringify(requestPayload, null, 2));
-
-    const response = await axios.post(
-      requestUrl,
-      requestPayload,
-      { headers: requestHeaders }
-    );
-
-    console.log("[DEBUG] Evolution API response status:", response.status);
-    console.log("[DEBUG] Evolution API response data:", JSON.stringify(response.data, null, 2));
-
-    return response.data;
-  } catch (error) {
-    console.error("Evolution API error status:", error.response?.status);
-    console.error("Evolution API error data:", JSON.stringify(error.response?.data, null, 2));
-    console.error("Evolution API request sent:", JSON.stringify(requestPayload, null, 2));
-    console.error("[DEBUG] Evolution API request config headers:", JSON.stringify(error.config?.headers, null, 2));
-    const detailedMessage = error.response?.data
-      ? JSON.stringify(error.response.data)
-      : error.message;
-    throw new Error(`Evolution API failed (${error.response?.status}): ${detailedMessage}`);
-  }
-}
-
-app.post("/generate-and-send", async (req, res) => {
-  try {
-    const { html, phoneNumber } = req.body;
+    const { html } = req.body;
     if (!html) {
       return res.status(400).json({ error: "HTML es requerido" });
     }
-    const phone = phoneNumber || WHATSAPP_PHONE;
-    if (!phone) {
-      return res.status(400).json({ error: "Número de WhatsApp no configurado" });
-    }
     const pngBuffer = await renderHtmlToPng(html);
-    const result = await sendWhatsAppMessage(phone, pngBuffer);
+    const imageUrl = await uploadImageToS3(pngBuffer);
     res.json({
       success: true,
-      message: "Imagen generada y enviada correctamente",
-      whatsappResponse: result,
+      message: "Imagen generada correctamente",
+      imageUrl,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Error procesando solicitud",
+      details: error.message,
+    });
+  }
+});
+
+app.post("/generate-and-send", async (req, res) => {
+  try {
+    const { html } = req.body;
+    if (!html) {
+      return res.status(400).json({ error: "HTML es requerido" });
+    }
+    const pngBuffer = await renderHtmlToPng(html);
+    const imageUrl = await uploadImageToS3(pngBuffer);
+    res.json({
+      success: true,
+      message: "Imagen generada correctamente",
+      imageUrl,
     });
   } catch (error) {
     res.status(500).json({
@@ -340,17 +288,12 @@ app.post("/generate-example", async (req, res) => {
         </body>
       </html>
     `;
-    const { phoneNumber } = req.body;
-    const phone = phoneNumber || WHATSAPP_PHONE;
-    if (!phone) {
-      return res.status(400).json({ error: "Número de WhatsApp no configurado" });
-    }
     const pngBuffer = await renderHtmlToPng(exampleHtml);
-    const result = await sendWhatsAppMessage(phone, pngBuffer);
+    const imageUrl = await uploadImageToS3(pngBuffer);
     res.json({
       success: true,
-      message: "Imagen de ejemplo generada y enviada",
-      whatsappResponse: result,
+      message: "Imagen generada correctamente",
+      imageUrl,
     });
   } catch (error) {
     res.status(500).json({
