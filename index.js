@@ -73,7 +73,7 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   }
 
   const s3Url = await uploadImageToS3(imageBuffer);
-  const imageUrl = `http://s3-http-proxy.railway.internal:3000/proxy?url=${encodeURIComponent(s3Url)}`;
+  const imageUrl = `http://127.0.0.1:3000/proxy?url=${encodeURIComponent(s3Url)}`;
 
   const requestPayload = {
     number: normalizedPhone,
@@ -207,6 +207,23 @@ app.post("/generate-example", async (req, res) => {
       error: "Error procesando solicitud",
       details: error.message,
     });
+  }
+});
+
+app.get("/proxy", async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ error: "Parámetro 'url' requerido" });
+  }
+  try {
+    const decoded = decodeURIComponent(url);
+    const response = await axios.get(decoded, { responseType: "arraybuffer" });
+    const contentType = response.headers["content-type"] || "image/png";
+    res.set("Content-Type", contentType);
+    res.send(Buffer.from(response.data));
+  } catch (error) {
+    console.error("[proxy] Error fetching URL:", url, error.message);
+    res.status(502).json({ error: "No se pudo obtener el recurso", details: error.message });
   }
 });
 
