@@ -73,7 +73,7 @@ async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
   }
 
   const s3Url = await uploadImageToS3(imageBuffer);
-  const imageUrl = `http://s3-http-proxy.railway.internal:3000/proxy?url=${encodeURIComponent(s3Url)}`;
+  const imageUrl = `https://s3-http-proxy-production.up.railway.app/proxy?url=${encodeURIComponent(s3Url)}`;
 
   const requestPayload = {
     number: normalizedPhone,
