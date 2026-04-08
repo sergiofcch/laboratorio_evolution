@@ -1,7 +1,8 @@
 import puppeteer from "puppeteer";
 import axios from "axios";
 import express from "express";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const app = express();
 app.use(express.json());
@@ -60,7 +61,13 @@ async function uploadImageToS3(imageBuffer) {
     })
   );
 
-  return `${S3_ENDPOINT}/${S3_BUCKET}/${filename}`;
+  const signedUrl = await getSignedUrl(
+    s3Client,
+    new GetObjectCommand({ Bucket: S3_BUCKET, Key: filename }),
+    { expiresIn: 3600 }
+  );
+
+  return signedUrl;
 }
 
 async function sendWhatsAppMessage(phoneNumber, imageBuffer) {
