@@ -162,37 +162,180 @@ app.post("/generate-and-send", async (req, res) => {
 
 app.post("/generate-example", async (req, res) => {
   try {
+    // Generate 6 unique random lottery numbers between 1 and 99
+    const lotteryNumbers = [];
+    while (lotteryNumbers.length < 6) {
+      const n = Math.floor(Math.random() * 99) + 1;
+      if (!lotteryNumbers.includes(n)) lotteryNumbers.push(n);
+    }
+    lotteryNumbers.sort((a, b) => a - b);
+
+    const ballColors = [
+      { bg: "#e63946", shadow: "#9b1a24" },
+      { bg: "#f4a261", shadow: "#b5621a" },
+      { bg: "#2a9d8f", shadow: "#1a6b61" },
+      { bg: "#264653", shadow: "#0f1e24" },
+      { bg: "#e9c46a", shadow: "#b08a1a" },
+      { bg: "#6a4c93", shadow: "#3d1f6b" },
+    ];
+
+    const ballsHtml = lotteryNumbers
+      .map(
+        (num, i) => `
+        <div class="ball" style="
+          background: radial-gradient(circle at 35% 35%, ${ballColors[i].bg}cc, ${ballColors[i].bg});
+          box-shadow: 4px 4px 12px ${ballColors[i].shadow}99, inset -3px -3px 8px rgba(0,0,0,0.25), inset 3px 3px 8px rgba(255,255,255,0.3);
+        ">
+          <span>${String(num).padStart(2, "0")}</span>
+        </div>`
+      )
+      .join("");
+
+    const drawDate = new Date().toLocaleString("es-CO", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
     const exampleHtml = `
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="UTF-8" />
           <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
             body {
-              font-family: Arial, sans-serif;
+              font-family: "Arial Black", Arial, sans-serif;
               display: flex;
               justify-content: center;
               align-items: center;
-              height: 100vh;
-              margin: 0;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              min-height: 100vh;
+              background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             }
-            .container {
-              background: white;
-              padding: 40px;
-              border-radius: 10px;
+            .card {
+              background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+              border: 2px solid rgba(255, 215, 0, 0.4);
+              border-radius: 24px;
+              padding: 48px 56px 40px;
               text-align: center;
-              box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+              box-shadow:
+                0 0 60px rgba(255, 215, 0, 0.15),
+                0 20px 60px rgba(0, 0, 0, 0.6);
+              max-width: 780px;
+              width: 100%;
             }
-            h1 { color: #333; margin: 0; }
-            p { color: #666; margin-top: 10px; }
-            .timestamp { color: #999; font-size: 12px; margin-top: 20px; }
+            .badge {
+              display: inline-block;
+              background: linear-gradient(90deg, #f7971e, #ffd200);
+              color: #1a1a2e;
+              font-size: 11px;
+              font-weight: 900;
+              letter-spacing: 3px;
+              text-transform: uppercase;
+              padding: 5px 18px;
+              border-radius: 20px;
+              margin-bottom: 18px;
+            }
+            .title {
+              font-size: 42px;
+              font-weight: 900;
+              letter-spacing: 4px;
+              text-transform: uppercase;
+              background: linear-gradient(90deg, #ffd200, #f7971e, #ffd200);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              margin-bottom: 6px;
+              text-shadow: none;
+            }
+            .subtitle {
+              font-size: 16px;
+              color: rgba(255, 255, 255, 0.55);
+              letter-spacing: 2px;
+              text-transform: uppercase;
+              margin-bottom: 40px;
+            }
+            .divider {
+              width: 60px;
+              height: 3px;
+              background: linear-gradient(90deg, #f7971e, #ffd200);
+              border-radius: 2px;
+              margin: 0 auto 40px;
+            }
+            .balls-row {
+              display: flex;
+              justify-content: center;
+              gap: 20px;
+              flex-wrap: wrap;
+              margin-bottom: 40px;
+            }
+            .ball {
+              width: 90px;
+              height: 90px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+            }
+            .ball span {
+              font-size: 30px;
+              font-weight: 900;
+              color: #ffffff;
+              text-shadow: 1px 2px 4px rgba(0,0,0,0.5);
+              letter-spacing: -1px;
+            }
+            .footer-divider {
+              width: 100%;
+              height: 1px;
+              background: rgba(255, 215, 0, 0.2);
+              margin-bottom: 20px;
+            }
+            .draw-info {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 8px;
+            }
+            .draw-label {
+              font-size: 11px;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+              color: rgba(255, 255, 255, 0.35);
+            }
+            .draw-date {
+              font-size: 13px;
+              color: rgba(255, 215, 0, 0.75);
+              font-weight: 700;
+              letter-spacing: 1px;
+              text-transform: capitalize;
+            }
+            .draw-id {
+              font-size: 12px;
+              color: rgba(255, 255, 255, 0.35);
+              letter-spacing: 1px;
+            }
           </style>
         </head>
         <body>
-          <div class="container">
-            <h1>🚀 Laboratorio Evolucion API</h1>
-            <p>Imagen generada con Puppeteer</p>
-            <div class="timestamp">${new Date().toLocaleString()}</div>
+          <div class="card">
+            <div class="badge">🏆 Resultado Oficial</div>
+            <div class="title">Sorteo de Lotería</div>
+            <div class="subtitle">Lotería Nacional · Gran Premio</div>
+            <div class="divider"></div>
+            <div class="balls-row">
+              ${ballsHtml}
+            </div>
+            <div class="footer-divider"></div>
+            <div class="draw-info">
+              <div class="draw-label">📅 Fecha del sorteo</div>
+              <div class="draw-date">${drawDate}</div>
+              <div class="draw-id">Sorteo #${Math.floor(Math.random() * 9000) + 1000}</div>
+            </div>
           </div>
         </body>
       </html>
